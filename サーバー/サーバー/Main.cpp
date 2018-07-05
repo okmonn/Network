@@ -8,10 +8,19 @@ void Create(void)
 	sock = std::make_shared<Sock>();
 }
 
+// Ú‘±
+void Accept(void)
+{
+	while (true)
+	{
+		sock->Accept();
+	}
+}
+
 // ŽóM
 void Recv(void)
 {
-	while (sock->GetEnd() == false)
+	while (true)
 	{
 		sock->Recv();
 	}
@@ -31,12 +40,13 @@ int main()
 {
 	Create();
 
+	std::thread accept(Accept);
 	std::thread recv(Recv);
 	std::thread send(Send);
 
+	accept.detach();
 	recv.join();
 	send.detach();
-
 
 	return 0;
 }

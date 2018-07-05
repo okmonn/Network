@@ -7,6 +7,9 @@ class Sock;
 // ƒNƒ‰ƒX‚Ì¶¬
 void Create(void);
 
+// Ú‘±
+void Accept(void);
+
 // óM
 void Recv(void);
 
