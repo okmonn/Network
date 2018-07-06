@@ -4,20 +4,20 @@
 
 #pragma comment(lib,"ws2_32.lib")
 
-// 最大文字数
-#define LENGTH_MAX 1024
-
 // コンストラクタ
 Sock::Sock() : result(0)
 {
 	data = {};
 	sock = INVALID_SOCKET;
 	addr = {};
+	connection.clear();
 	memset(&c_sock, INVALID_SOCKET, sizeof(c_sock));
 	SecureZeroMemory(&c_addr, sizeof(c_addr));
 	fds = {};
 	readfds = {};
 	time = { 0, 1000 };
+	memset(&r, 0, sizeof(r));
+	memset(&s, 0, sizeof(s));
 
 
 	LoadText("接続情報.txt");
@@ -59,8 +59,26 @@ void Sock::LoadText(std::string fileName, std::string mode)
 	}
 	fclose(file);
 
-	auto pos = buf.find_first_of(':');
-	port = buf.substr(pos + 1, buf.size());
+	while (buf.size() > 0)
+	{
+		auto pos = buf.find_first_of(':');
+		auto end = buf.find_first_of('\n');
+		if (end >= buf.size())
+		{
+			end = buf.size();
+		}
+		else
+		{
+			end -= 1;
+		}
+		connection.push_back(buf.substr(pos + 1, end - pos - 1));
+		end = buf.find_first_of('\n');
+		if (end >= buf.size())
+		{
+			end = buf.size() - 1;
+		}
+		buf.erase(buf.begin(), buf.begin() + end + 1);
+	}
 }
 
 // 初期化
@@ -103,7 +121,7 @@ bool Sock::CreateSock(void)
 {
 	//アドレスの設定
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(std::atoi(port.c_str()));
+	addr.sin_port = htons(std::atoi(connection[0].c_str()));
 	addr.sin_addr.S_un.S_addr = INADDR_ANY;
 
 	//ソケット生成
@@ -124,7 +142,7 @@ bool Sock::CreateSock(void)
 	else
 	{
 		printf("ソケットの生成：成功\n");
-		printf("接続ポート番号は%sです\n", port.c_str());
+		printf("接続ポート番号は%sです\n", connection[0].c_str());
 	}
 
 	return true;
@@ -205,9 +223,8 @@ void Sock::Recv(void)
 				if (FD_ISSET(c_sock[i], &fds))
 				{
 					// サーバからデータを受信
-					char buf[LENGTH_MAX];
-					memset(buf, 0, sizeof(buf));
-					result = recv(c_sock[i], buf, sizeof(buf), 0);
+					memset(r, 0, sizeof(r));
+					result = recv(c_sock[i], r, sizeof(r), 0);
 					if (result == -1)
 					{
 						char str[INET_ADDRSTRLEN];
@@ -219,7 +236,34 @@ void Sock::Recv(void)
 					else
 					{
 						char str[INET_ADDRSTRLEN];
-						printf("%sからの受信：%s\n", inet_ntop(c_addr[i].sin_family, &c_addr[i].sin_addr, str, sizeof(str)), buf);
+						printf("%sからの受信：%s\n", inet_ntop(c_addr[i].sin_family, &c_addr[i].sin_addr, str, sizeof(str)), r);
+
+						//指定IPアドレスに送信
+						std::string dummy;
+						for (int i = 0; r[i] != '/' && i < LENGTH_MAX; ++i)
+						{
+							dummy.push_back(r[i]);
+						}
+						for (int i = 0; i < CLIENT_MAX; ++i)
+						{
+							if (inet_addr(dummy.c_str()) == c_addr[i].sin_addr.S_un.S_addr)
+							{
+								std::string p;
+								p = dummy + "：";
+								for (int o = dummy.size() + 1; o < LENGTH_MAX; ++o)
+								{
+									p.push_back(r[o]);
+								}
+								if (send(c_sock[i], p.c_str(), sizeof(r), 0) == SOCKET_ERROR)
+								{
+									char str[INET_ADDRSTRLEN];
+									printf("%sへの送信：失敗\n", inet_ntop(c_addr[i].sin_family, &c_addr[i].sin_addr, str, sizeof(str)));
+									printf("送信エラー：%d\n", WSAGetLastError());
+								}
+
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -237,9 +281,8 @@ void Sock::Send(void)
 	//入力バッファのクリア
 	fflush(stdin);
 
-	char buf[LENGTH_MAX];
-	memset(buf, 0, sizeof(buf));
-	scanf_s("%s", &buf, sizeof(buf));
+	memset(s, 0, sizeof(s));
+	scanf_s("%s", &s, sizeof(s));
 	for (UINT i = 0; i < CLIENT_MAX; ++i)
 	{
 		if (c_sock[i] == INVALID_SOCKET)
@@ -248,7 +291,7 @@ void Sock::Send(void)
 		}
 		else
 		{
-			if (send(c_sock[i], buf, sizeof(buf), 0) == SOCKET_ERROR)
+			if (send(c_sock[i], s, sizeof(s), 0) == SOCKET_ERROR)
 			{
 				char str[INET_ADDRSTRLEN];
 				printf("%sへの送信：失敗\n", inet_ntop(c_addr[i].sin_family, &c_addr[i].sin_addr, str, sizeof(str)));

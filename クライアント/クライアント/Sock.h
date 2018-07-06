@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 
+// 文字最大数
+#define LENGTH_MAX 1024
+
 class Sock
 {
 public:
@@ -59,11 +62,8 @@ private:
 	// アドレス
 	struct sockaddr_in addr;
 
-	// ポート番号
-	std::string port;
-
 	// サーバーのPC名
-	std::string sever;
+	std::vector<std::string>connection;
 
 	// サーバーのアドレスリスト
 	std::vector<ULONG>list;
@@ -76,6 +76,12 @@ private:
 
 	// タイムアウト
 	struct timeval time;
+
+	// 受信文字
+	char r[LENGTH_MAX];
+
+	// 送信文字
+	char s[LENGTH_MAX];
 
 	// 終了フラグ
 	bool end;

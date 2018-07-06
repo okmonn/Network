@@ -1,10 +1,14 @@
 #pragma once
 #include <winsock2.h> 
 #include <ws2tcpip.h>
+#include <vector>
 #include <string>
 
 // クライアント最大接続数
 #define CLIENT_MAX 10
+
+// 文字最大数
+#define LENGTH_MAX 1024
 
 class Sock
 {
@@ -59,7 +63,7 @@ private:
 	struct sockaddr_in addr;
 
 	// ポート番号
-	std::string port;
+	std::vector<std::string>connection;
 
 	// クライアントソケット
 	SOCKET c_sock[CLIENT_MAX];
@@ -75,4 +79,10 @@ private:
 
 	// タイムアウト
 	struct timeval time;
+
+	// 受信文字
+	char r[LENGTH_MAX];
+
+	// 送信文字
+	char s[LENGTH_MAX];
 };

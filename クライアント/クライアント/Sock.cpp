@@ -5,19 +5,19 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-// 文字最大数
-#define LENGTH_MAX 1024
-
 // コンストラクタ
 Sock::Sock() : result(0)
 {
 	data = {};
 	sock = INVALID_SOCKET;
 	addr = {};
+	connection.clear();
 	list.clear();
 	fds = {};
 	readfds = {};
 	time = { 0, 1000 };
+	memset(&r, 0, sizeof(r));
+	memset(&s, 0, sizeof(s));
 	end = false;
 
 	LoadText("接続情報.txt");
@@ -59,13 +59,26 @@ void Sock::LoadText(std::string fileName, std::string mode)
 	fclose(file);
 
 	//PC名検索
-	auto pos = buf.find_first_of(':');
-	auto end = buf.find_first_of('\r');
-	sever = buf.substr(pos + 1, end - pos - 1);
-
-	//ポート番号検索
-	pos = buf.find_last_of(':');
-	port = buf.substr(pos + 1, buf.size());
+	while (buf.size() > 0)
+	{
+		auto pos = buf.find_first_of(':');
+		auto end = buf.find_first_of('\n');
+		if (end >= buf.size())
+		{
+			end = buf.size();
+		}
+		else
+		{
+			end -= 1;
+		}
+		connection.push_back(buf.substr(pos + 1, end - pos - 1));
+		end = buf.find_first_of('\n');
+		if (end >= buf.size())
+		{
+			end = buf.size() - 1;
+		}
+		buf.erase(buf.begin(), buf.begin() + end + 1);
+	}
 }
 
 // 初期化
@@ -113,7 +126,7 @@ bool Sock::CreateSock(void)
 	{
 		printf("このコンピュータの名前は%sです\n", name);
 
-		h = gethostbyname(sever.c_str());
+		h = gethostbyname(connection[0].c_str());
 		printf("ホストサーバーの名前は%sです\n", h->h_name);
 	}
 	else
@@ -131,7 +144,7 @@ bool Sock::CreateSock(void)
 
 	//ソケットの設定
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(std::atoi(port.c_str()));
+	addr.sin_port = htons(std::atoi(connection[1].c_str()));
 	addr.sin_addr.S_un.S_addr = i_addr.S_un.S_addr;
 
 	//ソケットの生成
@@ -144,7 +157,7 @@ bool Sock::CreateSock(void)
 	else
 	{
 		printf("ソケット生成：成功\n");
-		printf("接続ポート番号は%sです\n", port.c_str());
+		printf("接続ポート番号は%sです\n", connection[1].c_str());
 	}
 
 	return true;
@@ -205,9 +218,8 @@ void Sock::Recv(void)
 	{
 		if (FD_ISSET(sock, &fds))
 		{
-			char buf[LENGTH_MAX];
-			memset(buf, 0, sizeof(buf));
-			result = recv(sock, buf, sizeof(buf), 0);
+			memset(r, 0, sizeof(r));
+			result = recv(sock, r, sizeof(r), 0);
 			if (result == -1)
 			{
 				printf("サーバーが立ち上がっていません\n");
@@ -215,7 +227,7 @@ void Sock::Recv(void)
 			}
 			else
 			{
-				printf("受信：%s\n", buf);
+				printf("受信：%s\n", r);
 			}
 		}
 	}
@@ -225,16 +237,15 @@ void Sock::Recv(void)
 void Sock::Send(void)
 {
 	fflush(stdin);
-	char buf[LENGTH_MAX];
-	memset(buf, 0, sizeof(buf));
-	scanf_s("%s", &buf, sizeof(buf));
-	if (sendto(sock, buf, strlen(buf), 0, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+	memset(s, 0, sizeof(s));
+	scanf_s("%s", &s, sizeof(s));
+	if (sendto(sock, s, strlen(s), 0, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
 	{
 		printf("送信：失敗：%d\n", WSAGetLastError());
 	}
 	else
 	{
-		printf("送信：%s\n", &buf);
+		printf("送信：%s\n", &s);
 	}
 }
 
