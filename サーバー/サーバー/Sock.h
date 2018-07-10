@@ -35,7 +35,7 @@ private:
 	int StartUp(void);
 
 	// ソケットの生成
-	bool CreateSock(void);
+	int CreateSock(void);
 
 	// アドレスとの関連付け
 	int Bind(void);

@@ -28,6 +28,7 @@ Sock::Sock() : result(0)
 Sock::~Sock()
 {
 	Close();
+	WSACleanup();
 }
 
 // 読み込み
@@ -35,13 +36,15 @@ void Sock::LoadText(std::string fileName, std::string mode)
 {
 	std::string buf;
 	FILE* file;
-	if (fopen_s(&file, fileName.c_str(), mode.c_str()) != 0)
+	try 
 	{
-		printf("ファイルを開けませんでした\n");
-		return;
-	}
-	else
-	{
+		//ファイルを開く
+		if (fopen_s(&file, fileName.c_str(), mode.c_str()) != 0)
+		{
+			throw - 1;
+		}
+
+		//読み込み
 		char str;
 		while (true)
 		{
@@ -55,39 +58,55 @@ void Sock::LoadText(std::string fileName, std::string mode)
 				break;
 			}
 		}
+		fclose(file);
 
+		//文字列検索
+		while (buf.size() > 0)
+		{
+			auto pos = buf.find_first_of(':');
+			auto end = buf.find_first_of('\n');
+			if (end >= buf.size())
+			{
+				end = buf.size();
+			}
+			else
+			{
+				end -= 1;
+			}
+			connection.push_back(buf.substr(pos + 1, end - pos - 1));
+			end = buf.find_first_of('\n');
+			if (end >= buf.size())
+			{
+				end = buf.size() - 1;
+			}
+			buf.erase(buf.begin(), buf.begin() + end + 1);
+		}
 	}
-	fclose(file);
-
-	while (buf.size() > 0)
+	catch (int i) 
 	{
-		auto pos = buf.find_first_of(':');
-		auto end = buf.find_first_of('\n');
-		if (end >= buf.size())
+		if (i != 0)
 		{
-			end = buf.size();
+			printf("ファイルを開けませんでした\n");
 		}
-		else
-		{
-			end -= 1;
-		}
-		connection.push_back(buf.substr(pos + 1, end - pos - 1));
-		end = buf.find_first_of('\n');
-		if (end >= buf.size())
-		{
-			end = buf.size() - 1;
-		}
-		buf.erase(buf.begin(), buf.begin() + end + 1);
 	}
 }
 
 // 初期化
 int Sock::StartUp(void)
 {
-	result = WSAStartup(MAKEWORD(2, 0), &data);
-	if (result != 0)
+	try
 	{
-		switch (result)
+		result = WSAStartup(MAKEWORD(2, 0), &data);
+		if (result != 0)
+		{
+			throw result;
+		}
+
+		printf("起動時の初期化：成功\n");
+	}
+	catch (int i)
+	{
+		switch (i)
 		{
 		case WSASYSNOTREADY:
 			printf("ネットワークサブシステムがネットワークへの接続を準備できていない\n");
@@ -108,57 +127,81 @@ int Sock::StartUp(void)
 			break;
 		}
 	}
-	else
-	{
-		printf("起動時の初期化：成功\n");
-	}
-
+	
 	return result;
 }
 
 // ソケットの生成
-bool Sock::CreateSock(void)
+int Sock::CreateSock(void)
 {
 	//アドレスの設定
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(std::atoi(connection[0].c_str()));
 	addr.sin_addr.S_un.S_addr = INADDR_ANY;
 
-	//ソケット生成
-	sock = socket(addr.sin_family, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET)
+	try
 	{
-		printf("ソケット生成エラー：%d\n", WSAGetLastError());
-		return false;
+		//ソケット生成
+		sock = socket(addr.sin_family, SOCK_STREAM, 0);
+		if (sock == INVALID_SOCKET)
+		{
+			result = -1;
+			throw result;
+		}
+
+		result = 0;
+	}
+	catch (int i)
+	{
+		if (i != 0)
+		{
+			printf("ソケット生成エラー：%d\n", WSAGetLastError());
+		}
 	}
 
-	//ソケットの設定のセット
 	BOOL flag = 1;
-	result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
-	if (result != 0)
+	try
 	{
-		printf("ソケット設定：%d\n", WSAGetLastError());
-	}
-	else
-	{
+		//ソケットの設定のセット
+		result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
+		if (result != 0)
+		{
+			throw result;
+		}
+
 		printf("ソケットの生成：成功\n");
 		printf("接続ポート番号は%sです\n", connection[0].c_str());
 	}
-
-	return true;
+	catch (int i)
+	{
+		if (i != 0)
+		{
+			printf("ソケット設定：%d\n", WSAGetLastError());
+		}
+	}
+	
+	return result;
 }
 
 // アドレスとの関連付け
 int Sock::Bind(void)
 {
-	result = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
-	if (result != 0)
+	try
 	{
-		printf("関連付けエラー：%d\n", WSAGetLastError());
-	}
-	else
-	{
+		result = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+		if (result != 0)
+		{
+			throw result;
+		}
+
 		printf("関連付け：成功\n");
+	}
+	catch (int i)
+	{
+		if (i != 0)
+		{
+			printf("関連付けエラー：%d\n", WSAGetLastError());
+		}
 	}
 
 	return result;
@@ -167,14 +210,22 @@ int Sock::Bind(void)
 // クライアントとの接続待機
 int Sock::Listen(void)
 {
-	result = listen(sock, 5);
-	if (result != 0)
+	try
 	{
-		printf("接続待機エラー：%d\n", WSAGetLastError());
-	}
-	else
-	{
+		result = listen(sock, 5);
+		if (result != 0)
+		{
+			throw result;
+		}
+
 		printf("接続準備：成功\n");
+	}
+	catch (int i)
+	{
+		if (i != 0)
+		{
+			printf("接続待機エラー：%d\n", WSAGetLastError());
+		}
 	}
 
 	return result;
@@ -328,7 +379,8 @@ void Sock::Init(void)
 		return;
 	}
 
-	if (CreateSock() == false)
+	result = CreateSock();
+	if (result != 0)
 	{
 		return;
 	}

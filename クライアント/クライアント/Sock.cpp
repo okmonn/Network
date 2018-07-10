@@ -28,6 +28,7 @@ Sock::Sock() : result(0)
 Sock::~Sock()
 {
 	Close();
+	WSACleanup();
 }
 
 // テキスト読み込み
@@ -35,18 +36,20 @@ void Sock::LoadText(std::string fileName, std::string mode)
 {
 	std::string buf;
 	FILE* file;
-	if (fopen_s(&file, fileName.c_str(), mode.c_str()) != 0)
+	try
 	{
-		printf("ファイルを開けません\n");
-		return;
-	}
-	else
-	{
+		//ファイルを開く
+		if (fopen_s(&file, fileName.c_str(), mode.c_str()) != 0)
+		{
+			throw - 1;
+		}
+
+		//読み込み
 		char str;
 		while (true)
 		{
-			int cnt = fread(&str, sizeof(char), 1, file);
-			if (cnt != 0)
+			int len = fread(&str, sizeof(char), 1, file);
+			if (len != 0)
 			{
 				buf.push_back(str);
 			}
@@ -55,39 +58,55 @@ void Sock::LoadText(std::string fileName, std::string mode)
 				break;
 			}
 		}
-	}
-	fclose(file);
+		fclose(file);
 
-	//PC名検索
-	while (buf.size() > 0)
+		//文字列検索
+		while (buf.size() > 0)
+		{
+			auto pos = buf.find_first_of(':');
+			auto end = buf.find_first_of('\n');
+			if (end >= buf.size())
+			{
+				end = buf.size();
+			}
+			else
+			{
+				end -= 1;
+			}
+			connection.push_back(buf.substr(pos + 1, end - pos - 1));
+			end = buf.find_first_of('\n');
+			if (end >= buf.size())
+			{
+				end = buf.size() - 1;
+			}
+			buf.erase(buf.begin(), buf.begin() + end + 1);
+		}
+	}
+	catch (int i)
 	{
-		auto pos = buf.find_first_of(':');
-		auto end = buf.find_first_of('\n');
-		if (end >= buf.size())
+		if (i != 0)
 		{
-			end = buf.size();
+			printf("ファイルを開けませんでした\n");
 		}
-		else
-		{
-			end -= 1;
-		}
-		connection.push_back(buf.substr(pos + 1, end - pos - 1));
-		end = buf.find_first_of('\n');
-		if (end >= buf.size())
-		{
-			end = buf.size() - 1;
-		}
-		buf.erase(buf.begin(), buf.begin() + end + 1);
 	}
 }
 
 // 初期化
 int Sock::StartUp(void)
 {
-	result = WSAStartup(MAKEWORD(2, 0), &data);
-	if (result != 0)
+	try
 	{
-		switch (result)
+		result = WSAStartup(MAKEWORD(2, 0), &data);
+		if (result != 0)
+		{
+			throw result;
+		}
+
+		printf("起動時の初期化：成功\n");
+	}
+	catch (int i)
+	{
+		switch (i)
 		{
 		case WSASYSNOTREADY:
 			printf("ネットワークサブシステムがネットワークへの接続を準備できていない\n");
@@ -104,34 +123,42 @@ int Sock::StartUp(void)
 		case WSAEFAULT:
 			printf("第二引数であるlpWSAData は有効なポインタではない\n");
 			break;
+		default:
+			break;
 		}
-	}
-	else
-	{
-		printf("起動時の初期化：成功\n");
 	}
 
 	return result;
 }
 
 // ソケットの生成
-bool Sock::CreateSock(void)
+int Sock::CreateSock(void)
 {
 	//使用PC名前
 	char name[256];
 
 	//ホスト情報
 	struct hostent *h;
-	if (gethostname(name, 256) == 0)
+
+	try
 	{
+		result = gethostname(name, 256);
+		if (result != 0)
+		{
+			throw result;
+		}
+
 		printf("このコンピュータの名前は%sです\n", name);
 
 		h = gethostbyname(connection[0].c_str());
 		printf("ホストサーバーの名前は%sです\n", h->h_name);
 	}
-	else
+	catch (int i)
 	{
-		printf("ホスト名の取得に失敗しました：%d\n", WSAGetLastError());
+		if (i != 0)
+		{
+			printf("ホスト名の取得に失敗しました：%d\n", WSAGetLastError());
+		}
 	}
 
 	//アドレス情報
@@ -147,20 +174,29 @@ bool Sock::CreateSock(void)
 	addr.sin_port = htons(std::atoi(connection[1].c_str()));
 	addr.sin_addr.S_un.S_addr = i_addr.S_un.S_addr;
 
-	//ソケットの生成
-	sock = socket(addr.sin_family, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET)
+	try
 	{
-		printf("ソケット生成：失敗 : %d\n", WSAGetLastError());
-		return false;
-	}
-	else
-	{
+		//ソケットの生成
+		sock = socket(addr.sin_family, SOCK_STREAM, 0);
+		if (sock == INVALID_SOCKET)
+		{
+			result = -1;
+			throw result;
+		}
+
+		result = 0;
 		printf("ソケット生成：成功\n");
 		printf("接続ポート番号は%sです\n", connection[1].c_str());
 	}
-
-	return true;
+	catch (int i)
+	{
+		if (i != 0)
+		{
+			printf("ソケット生成：失敗 : %d\n", WSAGetLastError());
+		}
+	}
+	
+	return result;
 }
 
 // サーバーとの接続
@@ -170,18 +206,26 @@ int Sock::Connect(void)
 	for (UINT i = 0; i < list.size(); ++i)
 	{
 		addr.sin_addr.S_un.S_addr = list[i];
-		result = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-		if (result == 0)
+		try
 		{
+			result = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+			if (result != 0)
+			{
+				throw result;
+			}
+
 			char str[INET_ADDRSTRLEN];
 			printf("%sに接続しました\n", inet_ntop(addr.sin_family, &addr.sin_addr, str, sizeof(str)));
 			FD_SET(sock, &readfds);
 			break;
 		}
-		else
+		catch (int i)
 		{
-			printf("サーバー接続：失敗 : %d\n", WSAGetLastError());
-			continue;
+			if (i != 0)
+			{
+				printf("サーバー接続：失敗 : %d\n", WSAGetLastError());
+				continue;
+			}
 		}
 	}
 
@@ -197,7 +241,8 @@ void Sock::Init(void)
 		return;
 	}
 
-	if (CreateSock() != true)
+	result = CreateSock();
+	if (result != 0)
 	{
 		return;
 	}

@@ -38,7 +38,7 @@ private:
 	int StartUp(void);
 
 	// ソケットの生成
-	bool CreateSock(void);
+	int CreateSock(void);
 
 	// サーバーとの接続
 	int Connect(void);
