@@ -117,12 +117,14 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sock.cpp" />
+    <ClCompile Include="UDP.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Icon\Icon.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Sock.h" />
+    <ClInclude Include="UDP.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

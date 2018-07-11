@@ -4,28 +4,19 @@
 #include <vector>
 #include <string>
 
-// クライアント最大接続数
-#define CLIENT_MAX 10
-
 // 文字最大数
 #define LENGTH_MAX 1024
 
-class Sock
+class UDP
 {
 public:
 	// コンストラクタ
-	Sock();
+	UDP();
 	// デストラクタ
-	~Sock();
-
-	// クライアントとの接続
-	void Accept(void);
+	~UDP();
 
 	// 受信
 	void Recv(void);
-
-	// 送信
-	void Send(void);
 
 private:
 	// テキストの読み込み
@@ -40,14 +31,8 @@ private:
 	// アドレスとの関連付け
 	int Bind(void);
 
-	// クライアントとの接続待機
-	int Listen(void);
-
 	// 初期処理
 	void Init(void);
-
-	// クライアントとの接続終了
-	void Close(void);
 
 
 	// 参照結果
@@ -56,33 +41,15 @@ private:
 	// データ
 	WSADATA data;
 
-	// サーバーソケット
+	// UDPソケット
 	SOCKET sock;
 
-	// アドレス
+	// UDPアドレス
 	struct sockaddr_in addr;
 
 	// ポート番号
 	std::vector<std::string>connection;
 
-	// クライアントソケット
-	SOCKET c_sock[CLIENT_MAX];
-
-	// クライアントアドレス
-	struct sockaddr_in c_addr[CLIENT_MAX];
-
-	//
-	fd_set fds;
-
-	// 
-	fd_set readfds;
-
-	// タイムアウト
-	struct timeval time;
-
-	// 受信文字
-	char r[LENGTH_MAX];
-
-	// 送信文字
-	char s[LENGTH_MAX];
+	// 受信文字列
+	std::vector<char>r;
 };

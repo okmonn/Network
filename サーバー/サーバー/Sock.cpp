@@ -28,10 +28,11 @@ Sock::Sock() : result(0)
 Sock::~Sock()
 {
 	Close();
+	closesocket(sock);
 	WSACleanup();
 }
 
-// 読み込み
+// テキストの読み込み
 void Sock::LoadText(std::string fileName, std::string mode)
 {
 	std::string buf;
@@ -274,7 +275,7 @@ void Sock::Recv(void)
 				if (FD_ISSET(c_sock[i], &fds))
 				{
 					// サーバからデータを受信
-					memset(r, 0, sizeof(r));
+					memset(&r, 0, sizeof(r));
 					result = recv(c_sock[i], r, sizeof(r), 0);
 					if (result == -1)
 					{
@@ -332,7 +333,7 @@ void Sock::Send(void)
 	//入力バッファのクリア
 	fflush(stdin);
 
-	memset(s, 0, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	scanf_s("%s", &s, sizeof(s));
 	for (UINT i = 0; i < CLIENT_MAX; ++i)
 	{
@@ -353,19 +354,6 @@ void Sock::Send(void)
 				char str[INET_ADDRSTRLEN];
 				printf("%sへの送信：成功\n", inet_ntop(c_addr[i].sin_family, &c_addr[i].sin_addr, str, sizeof(str)));
 			}
-		}
-	}
-}
-
-// クライアントとの接続終了
-void Sock::Close(void)
-{
-	for (UINT i = 0; i < CLIENT_MAX; ++i)
-	{
-		if (c_sock[i] != INVALID_SOCKET)
-		{
-			closesocket(c_sock[i]);
-			c_sock[i] = INVALID_SOCKET;
 		}
 	}
 }
@@ -397,3 +385,17 @@ void Sock::Init(void)
 		return;
 	}
 }
+
+// クライアントとの接続終了
+void Sock::Close(void)
+{
+	for (UINT i = 0; i < CLIENT_MAX; ++i)
+	{
+		if (c_sock[i] != INVALID_SOCKET)
+		{
+			closesocket(c_sock[i]);
+			c_sock[i] = INVALID_SOCKET;
+		}
+	}
+}
+
