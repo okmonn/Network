@@ -71,10 +71,10 @@ private:
 	// クライアントアドレス
 	struct sockaddr_in c_addr[CLIENT_MAX];
 
-	//
+	// セレクトで使用
 	fd_set fds;
 
-	// 
+	// セレクトで使用
 	fd_set readfds;
 
 	// タイムアウト

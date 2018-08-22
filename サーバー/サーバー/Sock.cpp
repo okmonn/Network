@@ -240,7 +240,6 @@ void Sock::Accept(void)
 	{
 		if (c_sock[i] != INVALID_SOCKET)
 		{
-			//FD_SET(c_sock[i], &readfds);
 			continue;
 		}
 		else
