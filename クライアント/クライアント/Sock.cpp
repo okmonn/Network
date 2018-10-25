@@ -138,7 +138,7 @@ int Sock::CreateSock(void)
 	char name[256];
 
 	//ƒzƒXƒgî•ñ
-	struct hostent *h;
+	struct hostent *h = nullptr;
 
 	try
 	{
