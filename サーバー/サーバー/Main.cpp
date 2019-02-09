@@ -1,52 +1,37 @@
-#include "Main.h"
-#include "Sock.h"
+#include "Server/Server.h"
 #include <thread>
 
-// クラスの生成
-void Create(void)
-{
-	sock = std::make_shared<Sock>();
-}
-
-// 接続
-void Accept(void)
-{
-	while (true)
-	{
-		sock->Accept();
-	}
-}
-
-// 受信
-void Recv(void)
-{
-	while (true)
-	{
-		sock->Recv();
-	}
-}
-
-// 送信
-void Send(void)
-{
-	while (true)
-	{
-		sock->Send();
-	}
-}
-
-// エントリーポイント
 int main()
 {
-	Create();
+	auto& s = Server::Get();
+	std::thread acc([&]()->void {
+		while (true)
+		{
+			s.Accept();
+		}
+	});
+	std::thread recv([&]()->void {
+		while (true)
+		{
+			auto tmp = s.Recv();
+			if (tmp.size() > 0)
+			{
+				printf("受信：%s\n", tmp.c_str());
+			}
+		}
+	});
+	std::thread send([&]()->void {
+		while (true)
+		{
+			char tmp[256];
+			scanf_s("%s", tmp, _countof(tmp));
+			s.Send(tmp, _countof(tmp));
+		}
+	});
 
-	std::thread accept(Accept);
-	std::thread recv(Recv);
-	std::thread send(Send);
-
-	accept.detach();
+	acc.join();
 	recv.join();
-	send.detach();
+	send.join();
 
 	return 0;
 }
