@@ -1,6 +1,7 @@
 #pragma once
 #include <WinSock2.h>
 #include <vector>
+#include <optional>
 
 class Client
 {
@@ -15,7 +16,7 @@ public:
 	}
 
 	// óM
-	std::string Recv(void);
+	std::optional<std::string> Recv(void);
 
 	// ‘—M
 	void Send(const char* data, const unsigned int& size);

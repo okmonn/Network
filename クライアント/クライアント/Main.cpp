@@ -3,30 +3,35 @@
 
 int main()
 {
+	bool threadFlag = true;
 	auto& s = Client::Get();
 	std::thread recv([&]()->void {
-		while (true)
+		while (threadFlag)
 		{
 			auto tmp = s.Recv();
-
-			if (tmp.size() > 0)
+			if (tmp == std::nullopt)
 			{
-				std::string n(tmp.begin(), tmp.end());
-				printf("受信：%s\n", n.c_str());
+				threadFlag = false;
+				continue;
+			}
+
+			if (tmp->size() > 0)
+			{
+				printf("受信：%s\n", tmp->c_str());
 			}
 		}
 	});
 	std::thread send([&]()->void {
-		while (true)
+		while (threadFlag)
 		{
 			char tmp[256];
-			scanf_s("%s", tmp, _countof(tmp));
+			scanf_s("%s", tmp, unsigned int(_countof(tmp)));
 			s.Send(tmp, _countof(tmp));
 		}
 	});
 
+	send.detach();
 	recv.join();
-	send.join();
 
 	return 0;
 }

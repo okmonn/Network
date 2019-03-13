@@ -65,6 +65,8 @@ int Client::Connect(void)
 
 	FD_SET(sock, &readfds);
 
+	printf("サーバーとの接続：成功\n");
+
 	return hr;
 }
 
@@ -73,12 +75,12 @@ int Client::SetUp(void)
 {
 	char port[5];
 	printf("ポート番号を入力\n");
-	scanf_s("%s", port, _countof(port));
+	scanf_s("%s", port, unsigned int(_countof(port)));
 	fflush(stdin);
 
 	char tmp[INET_ADDRSTRLEN];
 	printf("IPアドレスまたはPC名を入力\n");
-	scanf_s("%s", tmp, _countof(tmp));
+	scanf_s("%s", tmp, unsigned int(_countof(tmp)));
 
 	addr.sin_family           = AF_INET;
 	addr.sin_port             = htons(std::atoi(port));
@@ -127,7 +129,7 @@ void Client::Init(void)
 }
 
 // 受信
-std::string Client::Recv(void)
+std::optional<std::string> Client::Recv(void)
 {
 	memcpy(&fds, &readfds, sizeof(fd_set));
 	auto len = select(0, &fds, nullptr, nullptr, &time);
@@ -140,12 +142,13 @@ std::string Client::Recv(void)
 	if (FD_ISSET(sock, &fds))
 	{
 		msg.resize(DATA_MAX);
-		auto hr = recv(sock, &msg[0], msg.size(), 0);
+		auto hr = recv(sock, &msg[0], int(msg.size()), 0);
 		if (hr <= 0)
 		{
 			if (hr == -1)
 			{
 				OutputDebugString(_T("\nサーバーが立ち上がっていない\n"));
+				return std::nullopt;
 			}
 			return std::string();
 		}
@@ -161,6 +164,10 @@ void Client::Send(const char * data, const unsigned int & size)
 	auto hr = sendto(sock, data, size, 0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 	if (hr != size)
 	{
-		OutputDebugString(_T("\n送信：失敗\n"));
+		printf("送信：失敗\n");
+	}
+	else
+	{
+		printf("送信：成功\n");
 	}
 }

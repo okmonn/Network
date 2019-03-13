@@ -70,7 +70,7 @@ int Server::SetUp(void)
 	char port[5];
 	{
 		printf("ポート番号を入力\n");
-		scanf_s("%s", port, _countof(port));
+		scanf_s("%s", port, unsigned int(_countof(port)));
 		fflush(stdin);
 	}
 
@@ -95,6 +95,10 @@ int Server::Bind(void)
 	if (hr != 0)
 	{
 		OutputDebugString(_T("\nアドレスとの関連付け：失敗\n"));
+	}
+	else
+	{
+		printf("サーバー立ち上げ：成功\n");
 	}
 
 	return hr;
@@ -159,10 +163,14 @@ int Server::Send(const std::string & data)
 		{
 			std::string tmp(data.substr(data.find_first_of('/') + 1, data.find_first_of('\0')));
 			auto n = ip + "：" + tmp;
-			auto hr = send(client[i], n.c_str(), n.size(), 0);
+			auto hr = send(client[i], n.c_str(), int(n.size()), 0);
 			if (hr != tmp.size())
 			{
-				OutputDebugString(_T("\n送信：失敗\n"));
+				printf("送信：失敗\n");
+			}
+			else
+			{
+				printf("送信：成功\n");
 			}
 			break;
 		}
@@ -189,14 +197,15 @@ std::string Server::Recv(const unsigned int clientIndex)
 	if (FD_ISSET(client[clientIndex], &fds))
 	{
 		msg.resize(DATA_MAX);
-		auto hr = recv(client[clientIndex], &msg[0], msg.size(), 0);
+		auto hr = recv(client[clientIndex], &msg[0], int(msg.size()), 0);
 		if (hr <= 0)
 		{
 			if (hr == -1)
 			{
+				char str[INET_ADDRSTRLEN];
+				printf("IP：%sが切断しました\n", inet_ntop(clientAddr[clientIndex].sin_family, &clientAddr[clientIndex].sin_addr, str, sizeof(str)));
 				closesocket(client[clientIndex]);
 				client[clientIndex] = INVALID_SOCKET;
-				OutputDebugString(_T("\nクライアントが存在しません\n"));
 			}
 			return std::string();
 		}
@@ -220,7 +229,11 @@ void Server::Send(const char * data, const unsigned int size)
 		auto hr = send(client[i], data, size, 0);
 		if (hr != size)
 		{
-			OutputDebugString(_T("\n送信：失敗\n"));
+			printf("送信：失敗\n");
+		}
+		else
+		{
+			printf("送信：成功\n");
 		}
 	}
 }

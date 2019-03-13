@@ -24,7 +24,7 @@ int main()
 		while (true)
 		{
 			char tmp[256];
-			scanf_s("%s", tmp, _countof(tmp));
+			scanf_s("%s", tmp, unsigned int(_countof(tmp)));
 			s.Send(tmp, _countof(tmp));
 		}
 	});
