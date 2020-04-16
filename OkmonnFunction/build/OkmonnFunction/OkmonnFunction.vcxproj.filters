@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Bitmap">
+      <UniqueIdentifier>{99781767-caf8-44f4-9851-58c128d3a824}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="String">
+      <UniqueIdentifier>{ab139e8b-5013-4759-9f2f-1a201222ed75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Function">
+      <UniqueIdentifier>{3d7a07e8-5edd-435c-8988-bba4f7f92a04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Pmd">
+      <UniqueIdentifier>{14c2ccb7-e043-4695-b211-fc6b0237cdea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vmd">
+      <UniqueIdentifier>{817777b0-4f5a-4d06-b586-f3efc9d227f9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\Vector.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Matrix.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Bitmap.h">
+      <Filter>Bitmap</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Code.h">
+      <Filter>String</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Function.h">
+      <Filter>Function</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Pmd.h">
+      <Filter>Pmd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Vmd.h">
+      <Filter>Vmd</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Bitmap.cpp">
+      <Filter>Bitmap</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Code.cpp">
+      <Filter>String</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Function.cpp">
+      <Filter>Function</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Pmd.cpp">
+      <Filter>Pmd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Vmd.cpp">
+      <Filter>Vmd</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
